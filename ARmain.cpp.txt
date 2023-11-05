@@ -1,0 +1,88 @@
+//-------------------------------------------------------------------------------------------
+#include <iostream>
+#include <opencv2/opencv.hpp>
+#include <opencv2/aruco.hpp>
+
+using namespace cv;
+using namespace std;
+
+int main(int argc, char** argv)
+{
+    // Load the input video
+    VideoCapture cap(0);
+    if (!cap.isOpened())
+    {
+        cout << "Error opening video file" << endl;
+        return -1;
+    }
+
+    // Create the output video writer
+    VideoWriter outputVideo("output_video.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), cap.get(CAP_PROP_FPS), Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
+
+    // Load the ArUco dictionary
+    Ptr<aruco::Dictionary> dictionary = aruco::getPredefinedDictionary(aruco::DICT_6X6_250);
+
+    // Initialize the detector parameters
+    Ptr<aruco::DetectorParameters> parameters = aruco::DetectorParameters::create();
+    parameters->cornerRefinementMethod = aruco::CORNER_REFINE_SUBPIX;
+
+    // Loop through the frames in the input video
+    Mat frame;
+    while (cap.read(frame))
+    {
+        // Detect the ArUco markers and their corners in the frame
+        vector<int> markerIds;
+        vector<vector<Point2f>> markerCorners;
+        aruco::detectMarkers(frame, dictionary, markerCorners, markerIds, parameters);
+
+        // Draw the detected markers and their corners on the frame
+        if (markerIds.size() > 0)
+        {
+            aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
+
+            // Loop through the detected markers
+            for (int i = 0; i < markerIds.size(); i++)
+            {
+                // Get the corners of the i-th marker
+                vector<Point2f> corners = markerCorners[i];
+
+                // Get the top-left and bottom-right corners of the marker
+                Point2f tl = corners[0];
+                Point2f br = corners[2];
+
+                // Extract the region of interest (ROI) where the video will be overlaid
+                Rect roi(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+                Mat roiFrame = frame(roi);
+
+                // Play the video on top of the marker
+                VideoCapture video("C:/Users/raghu/Downloads/flowers-68367.mp4");
+                if (video.isOpened())
+                {
+                    Mat overlayFrame;
+                    while (video.read(overlayFrame))
+                    {
+                        resize(overlayFrame, overlayFrame, roiFrame.size());
+                        overlayFrame.copyTo(roiFrame);
+                        outputVideo.write(frame);
+                    }
+                }
+            }
+        }
+
+        // Write the frame to the output video
+        outputVideo.write(frame);
+
+        // Display the frame
+        imshow("Output", frame);
+
+        // Exit if the user presses the ESC key
+        if (waitKey(1) == 27)
+            break;
+    }
+
+    // Release the video capture and writer
+    cap.release();
+    outputVideo.release();
+
+    return 0;
+}

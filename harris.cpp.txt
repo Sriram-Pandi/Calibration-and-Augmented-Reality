@@ -1,0 +1,54 @@
+#include <opencv2/opencv.hpp>
+using namespace cv;
+
+
+int main(int argc, char** argv)
+{
+    cv::VideoCapture cap(0);
+    Mat frame;
+    
+    
+    while (true) {
+        
+        cap >> frame;
+        // Check if image was successfully read
+        if (frame.empty())
+        {
+            std::cout << "Error: Could not read image file." << std::endl;
+            return -1;
+        }
+        cv::imshow("Original Image", frame);
+        // Convert image to grayscale
+        cv::Mat gray;
+        cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+
+        // Detect Harris corners
+        cv::Mat corners;
+        cv::cornerHarris(gray, corners, 2, 3, 0.04);
+        // Normalize the corner response
+        cv::Mat corners_norm;
+        cv::normalize(corners, corners_norm, 0, 255, cv::NORM_MINMAX, CV_32FC1, cv::Mat());
+
+        // Draw circles around the detected corners
+        cv::Mat img_circles = frame.clone();
+        for (int i = 0; i < corners_norm.rows; i++)
+        {
+            for (int j = 0; j < corners_norm.cols; j++)
+            {
+                if (static_cast<int>(corners_norm.at<float>(i, j)) > 200) // Only draw circles around strong corners
+                {
+                    cv::circle(img_circles, cv::Point(j, i), 5, cv::Scalar(0, 0, 255), 2, cv::LINE_AA);
+                }
+            }
+        }
+        
+        cv::imshow("Image with Harris Corners", img_circles);
+        
+        if (waitKey(1) == 27) {
+            break;
+        }
+        
+    }
+
+    return 0;
+}
