@@ -7,3 +7,7 @@ Course project by Sriram Pandi and Srinivas Peri. The examples cover camera cali
 - [Original Visual Studio and OpenCV setup notes](Read_Me_prcv.txt)
 
 The C++ examples are stored as text. For a local build, add the desired listing as a C++ source file to a Visual Studio project with OpenCV configured. The original setup notes reference a separate Visual Studio project archive.
+
+## Reproduction checklist
+
+Prepare the camera and target required by the selected source listing. Configure a C++ project with the OpenCV core, calibration, and ArUco functionality that the listing imports. Review image paths and camera index in the listing before building. Start with a stationary scene and verify marker detection before checking the projected overlay.
